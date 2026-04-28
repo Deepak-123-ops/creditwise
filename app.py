@@ -93,6 +93,14 @@ st.markdown("""
     /* Sidebar */
     [data-testid="stSidebar"] { background: #1a237e; }
     [data-testid="stSidebar"] * { color: white !important; }
+
+    /* Force all form field labels to dark blue — visible on any background */
+    div[data-testid="stForm"] label p,
+    div[data-testid="stForm"] label,
+    .stNumberInput label p,
+    .stSelectbox label p,
+    .stSlider label p,
+    .stTextInput label p { color: #1a237e !important; font-weight: 700 !important; font-size: 0.95rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
