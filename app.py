@@ -6,6 +6,7 @@ import joblib
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="CreditWise – Loan Approval System",
+    page_icon="💳",
     layout="wide",
 )
 
@@ -110,25 +111,25 @@ model, scaler, ohe, le_edu, feature_names = load_artifacts()
 
 
 # ── Sidebar – model info ───────────────────────────────────────────────────────
-# with st.sidebar:
-#     st.markdown("## 💳 CreditWise")
-#     st.markdown("---")
-#     st.markdown("**Model:** Naïve Bayes")
-#     st.markdown("**Accuracy:** 86.0 %")
-#     st.markdown("**Precision:** 81.1 %")
-#     st.markdown("**Recall:** 70.5 %")
-#     st.markdown("**F1 Score:** 75.4 %")
-#     st.markdown("---")
-#     st.markdown("**Features used**")
-#     st.markdown(
-#         "Income · Co-applicant income · Age · Dependents · "
-#         "Credit score · DTI ratio · Savings · Collateral · "
-#         "Loan amount & term · Employment · Marital status · "
-#         "Loan purpose · Property area · Education · Gender · "
-#         "Employer category"
-#     )
-#     st.markdown("---")
-#     st.caption("Built with Streamlit × scikit-learn")
+with st.sidebar:
+    st.markdown("## 💳 CreditWise")
+    st.markdown("---")
+    st.markdown("**Model:** Naïve Bayes")
+    st.markdown("**Accuracy:** 86.0 %")
+    st.markdown("**Precision:** 81.1 %")
+    st.markdown("**Recall:** 70.5 %")
+    st.markdown("**F1 Score:** 75.4 %")
+    st.markdown("---")
+    st.markdown("**Features used**")
+    st.markdown(
+        "Income · Co-applicant income · Age · Dependents · "
+        "Credit score · DTI ratio · Savings · Collateral · "
+        "Loan amount & term · Employment · Marital status · "
+        "Loan purpose · Property area · Education · Gender · "
+        "Employer category"
+    )
+    st.markdown("---")
+    st.caption("Built with Streamlit × scikit-learn")
 
 
 # ── Header ─────────────────────────────────────────────────────────────────────
@@ -146,7 +147,7 @@ if "example_loaded" not in st.session_state:
 
 col_ex1, col_ex2 = st.columns([1, 4])
 with col_ex1:
-    if st.button("Load Approved Example"):
+    if st.button("✨ Load Approved Example"):
         st.session_state.example_loaded = True
         st.session_state.ex = {
             "gender": "Male", "age": 35, "marital_status": "Married",
@@ -162,194 +163,177 @@ with col_ex1:
 
 ex = st.session_state.get("ex", {})
 
+# ── Badge helper ───────────────────────────────────────────────────────────────
+def badge(color, text):
+    colors = {
+        "green":  ("#00c853", "#003300"),
+        "yellow": ("#ffd600", "#3d2e00"),
+        "orange": ("#ff6d00", "#3d1a00"),
+        "red":    ("#ff1744", "#3d0000"),
+        "blue":   ("#2979ff", "#00144d"),
+        "star":   ("#aa00ff", "#1a0033"),
+        "grey":   ("#90a4ae", "#1a2226"),
+    }
+    icon_map = {
+        "green": "🟢", "yellow": "🟡", "orange": "🟠",
+        "red": "🔴", "blue": "🔵", "star": "🌟", "grey": "⚪",
+    }
+    bg, fg   = colors.get(color, ("#90a4ae", "#1a2226"))
+    icon     = icon_map.get(color, "ℹ️")
+    st.markdown(
+        f'<div style="background:{bg};color:{fg};padding:5px 12px;border-radius:8px;'
+        f'font-size:0.82rem;font-weight:700;margin-top:2px;margin-bottom:10px;'
+        f'display:inline-block;">'
+        f'{icon} {text}</div>',
+        unsafe_allow_html=True
+    )
+
 # ── Input form ─────────────────────────────────────────────────────────────────
 with st.form("loan_form"):
 
-    # Personal Information
+    # ── Personal Information ───────────────────────────────────────────────────
     st.markdown('<div class="section-card"><div class="section-title">👤 Personal Information</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
+
     with c1:
         gender_opts = ["Male", "Female"]
-        gender      = st.selectbox("Gender", gender_opts, index=gender_opts.index(ex.get("gender", "Male")))
-        st.caption("⚥ Used for demographic profiling")
+        gender = st.selectbox("Gender", gender_opts, index=gender_opts.index(ex.get("gender", "Male")))
+        badge("grey", "Used for demographic profiling")
 
         age = st.number_input("Age", 18, 75, ex.get("age", 35))
-        if age < 25:
-            st.caption("Young — limited credit history (18–24)")
-        elif age < 40:
-            st.caption("Prime — strong earning years (25–39)")
-        elif age < 55:
-            st.caption("Experienced — stable profile (40–54)")
-        else:
-            st.caption("Senior — shorter repayment horizon (55+)")
-
-        ms_opts        = ["Single", "Married"]
-        marital_status = st.selectbox("Marital Status", ms_opts, index=ms_opts.index(ex.get("marital_status", "Single")))
-        if marital_status == "Married":
-            st.caption("Married — co-applicant income likely")
-        else:
-            st.caption("Single — sole income dependency")
+        if age < 25:    badge("yellow", "Young — limited credit history (18–24)")
+        elif age < 40:  badge("green",  "Prime — strong earning years (25–39)")
+        elif age < 55:  badge("green",  "Experienced — stable profile (40–54)")
+        else:           badge("yellow", "Senior — shorter repayment horizon (55+)")
 
     with c2:
+        ms_opts = ["Single", "Married"]
+        marital_status = st.selectbox("Marital Status", ms_opts, index=ms_opts.index(ex.get("marital_status", "Single")))
+        if marital_status == "Married": badge("green",  "Married — co-applicant income likely")
+        else:                           badge("yellow", "Single — sole income dependency")
+
         dependents = st.number_input("Number of Dependents", 0, 10, ex.get("dependents", 0))
-        if dependents == 0:
-            st.caption("None — no financial dependents")
-        elif dependents <= 2:
-            st.caption("Low — manageable responsibility (1–2)")
-        else:
-            st.caption("High — more dependents = higher expenses (3+)")
+        if dependents == 0:    badge("green",  "None — no financial dependents")
+        elif dependents <= 2:  badge("yellow", f"{dependents} dependent(s) — manageable")
+        else:                  badge("red",    f"{dependents} dependents — high expense burden")
 
-        edu_opts  = ["Graduate", "Not Graduate"]
+    with c3:
+        edu_opts = ["Graduate", "Not Graduate"]
         education = st.selectbox("Education Level", edu_opts, index=edu_opts.index(ex.get("education", "Graduate")))
-        if education == "Graduate":
-            st.caption("Graduate — higher earning potential")
-        else:
-            st.caption("Not Graduate — may affect loan scoring")
+        if education == "Graduate": badge("green",  "Graduate — higher earning potential")
+        else:                       badge("yellow", "Not Graduate — may affect scoring")
 
-        emp_opts   = ["Salaried", "Self-employed", "Contract", "Unemployed"]
+        emp_opts = ["Salaried", "Self-employed", "Contract", "Unemployed"]
         employment = st.selectbox("Employment Status", emp_opts, index=emp_opts.index(ex.get("employment", "Salaried")))
-        if employment == "Salaried":
-            st.caption("Salaried — most stable income type")
-        elif employment == "Self-employed":
-            st.caption("Self-employed — variable income")
-        elif employment == "Contract":
-            st.caption("Contract — less job security")
-        else:
-            st.caption("Unemployed — high risk for lenders")
+        if employment == "Salaried":       badge("green",  "Salaried — most stable income")
+        elif employment == "Self-employed":badge("yellow", "Self-employed — variable income")
+        elif employment == "Contract":     badge("orange", "Contract — less job security")
+        else:                              badge("red",    "Unemployed — high risk")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Financial Information
-    st.markdown('<div class="section-card"><div class="section-title"> Financial Information</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
+    # ── Financial Information ──────────────────────────────────────────────────
+    st.markdown('<div class="section-card"><div class="section-title">💰 Financial Information</div>', unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+
     with c1:
         applicant_income = st.number_input("Applicant Income (₹)", 0, 10_000_000, ex.get("applicant_income", 50_000), step=1)
-        if applicant_income < 25_000:
-            st.caption("Low — below ₹25,000")
-        elif applicant_income < 75_000:
-            st.caption("Moderate — ₹25,000 – ₹75,000")
-        elif applicant_income < 2_00_000:
-            st.caption("Good — ₹75,000 – ₹2,00,000")
-        else:
-            st.caption("Excellent — above ₹2,00,000")
+        if applicant_income < 25_000:       badge("red",    "Low — below ₹25,000")
+        elif applicant_income < 75_000:     badge("yellow", "Moderate — ₹25K–₹75K")
+        elif applicant_income < 2_00_000:   badge("green",  "Good — ₹75K–₹2L")
+        else:                               badge("star",   "Excellent — above ₹2,00,000")
 
-        coapplicant_income = st.number_input("Co-applicant Income (₹)", 0, 10_000_000, ex.get("coapplicant_income", 0), step=100000)
-        if coapplicant_income == 0:
-            st.caption("None — no co-applicant")
-        elif coapplicant_income < 25_000:
-            st.caption("Low — below ₹25,000")
-        else:
-            st.caption("Good — boosts approval chances")
-
-        credit_score = st.slider("Credit Score", 300, 900, ex.get("credit_score", 650))
-        if credit_score < 500:
-            st.caption("Poor — very high risk (300–499)")
-        elif credit_score < 600:
-            st.caption("Fair — high risk (500–599)")
-        elif credit_score < 700:
-            st.caption("Average — moderate risk (600–699)")
-        elif credit_score < 800:
-            st.caption("Good — low risk (700–799)")
-        else:
-            st.caption("Excellent — very low risk (800–900)")
+        coapplicant_income = st.number_input("Co-applicant Income (₹)", 0, 10_000_000, ex.get("coapplicant_income", 0), step=1)
+        if coapplicant_income == 0:         badge("grey",   "None — no co-applicant")
+        elif coapplicant_income < 25_000:   badge("yellow", "Low — below ₹25,000")
+        else:                               badge("green",  "Good — boosts approval chances")
 
     with c2:
-        dti_ratio = st.slider("DTI Ratio (%)", 0.0, 100.0, float(ex.get("dti_ratio", 30.0)), step=0.5)
-        if dti_ratio < 20:
-            st.caption("Excellent — very low debt burden (<20%)")
-        elif dti_ratio < 35:
-            st.caption("Good — manageable debt (20–35%)")
-        elif dti_ratio < 50:
-            st.caption("Moderate — borderline (35–50%)")
-        else:
-            st.caption("High — too much debt (>50%)")
+        credit_score = st.slider("Credit Score", 300, 900, ex.get("credit_score", 650))
+        if credit_score < 500:    badge("red",    f"{credit_score} — Poor (300–499)")
+        elif credit_score < 600:  badge("orange", f"{credit_score} — Fair (500–599)")
+        elif credit_score < 700:  badge("yellow", f"{credit_score} — Average (600–699)")
+        elif credit_score < 800:  badge("green",  f"{credit_score} — Good (700–799)")
+        else:                     badge("star",   f"{credit_score} — Excellent (800–900)")
 
-        savings = st.number_input("Savings (₹)", 0, 100_000_000, ex.get("savings", 100_000), step=100000)
-        if savings < 10_000:
-            st.caption("Very Low — below ₹10,000")
-        elif savings < 1_00_000:
-            st.caption("Low — ₹10,000 – ₹1,00,000")
-        elif savings < 5_00_000:
-            st.caption("Good — ₹1,00,000 – ₹5,00,000")
-        else:
-            st.caption("Excellent — above ₹5,00,000")
+        dti_ratio = st.slider("DTI Ratio (%)", 0.0, 100.0, float(ex.get("dti_ratio", 30.0)), step=0.5)
+        if dti_ratio < 20:    badge("star",   f"{dti_ratio}% — Excellent (below 20%)")
+        elif dti_ratio < 35:  badge("green",  f"{dti_ratio}% — Good (20–35%)")
+        elif dti_ratio < 50:  badge("yellow", f"{dti_ratio}% — Moderate (35–50%)")
+        else:                 badge("red",    f"{dti_ratio}% — High debt burden (>50%)")
+
+    with c3:
+        savings = st.number_input("Savings (₹)", 0, 100_000_000, ex.get("savings", 100_000), step=1)
+        if savings < 10_000:       badge("red",    "Very Low — below ₹10,000")
+        elif savings < 1_00_000:   badge("yellow", "Low — ₹10K–₹1L")
+        elif savings < 5_00_000:   badge("green",  "Good — ₹1L–₹5L")
+        else:                      badge("star",   "Excellent — above ₹5,00,000")
 
         collateral_value = st.number_input("Collateral Value (₹)", 0, 100_000_000, ex.get("collateral_value", 500_000), step=1)
-        if collateral_value < 1_00_000:
-            st.caption("Very Low — below ₹1,00,000")
-        elif collateral_value < 10_00_000:
-            st.caption("Moderate — ₹1,00,000 – ₹10,00,000")
-        elif collateral_value < 50_00_000:
-            st.caption("Good — ₹10,00,000 – ₹50,00,000")
-        else:
-            st.caption("Excellent — above ₹50,00,000")
+        if collateral_value < 1_00_000:     badge("red",    "Very Low — below ₹1L")
+        elif collateral_value < 10_00_000:  badge("yellow", "Moderate — ₹1L–₹10L")
+        elif collateral_value < 50_00_000:  badge("green",  "Good — ₹10L–₹50L")
+        else:                               badge("star",   "Excellent — above ₹50L")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Loan Details
+    # ── Loan Details ───────────────────────────────────────────────────────────
     st.markdown('<div class="section-card"><div class="section-title">🏦 Loan Details</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
+
     with c1:
         loan_amount = st.number_input("Loan Amount (₹)", 10_000, 100_000_000, ex.get("loan_amount", 500_000), step=1)
-        if loan_amount < 1_00_000:
-            st.caption("Small Loan — below ₹1,00,000 (easy to approve)")
-        elif loan_amount < 10_00_000:
-            st.caption("Medium Loan — ₹1,00,000 – ₹10,00,000")
-        elif loan_amount < 50_00_000:
-            st.caption("Large Loan — ₹10,00,000 – ₹50,00,000")
-        else:
-            st.caption("Very Large Loan — above ₹50,00,000 (harder to approve)")
+        if loan_amount < 1_00_000:      badge("green",  "Small — below ₹1L (easy to approve)")
+        elif loan_amount < 10_00_000:   badge("yellow", "Medium — ₹1L–₹10L")
+        elif loan_amount < 50_00_000:   badge("orange", "Large — ₹10L–₹50L")
+        else:                           badge("red",    "Very Large — above ₹50L (harder)")
 
         term_opts = [12, 24, 36, 48, 60, 84, 120, 180, 240, 360]
         loan_term = st.selectbox("Loan Term (months)", term_opts, index=term_opts.index(ex.get("loan_term", 60)))
-        if loan_term <= 24:
-            st.caption("Short Term — up to 2 years")
-        elif loan_term <= 60:
-            st.caption("Medium Term — 3 to 5 years")
-        elif loan_term <= 120:
-            st.caption("Long Term — 6 to 10 years")
-        else:
-            st.caption("Very Long Term — 10 to 30 years (home loans)")
-
-        pur_opts     = ["Home", "Car", "Education", "Business", "Personal"]
-        loan_purpose = st.selectbox("Loan Purpose", pur_opts, index=pur_opts.index(ex.get("loan_purpose", "Home")))
-        purpose_info = {
-            "Home":      "Home Loan — high value, long term, asset backed",
-            "Car":       "Car Loan — medium value, asset backed",
-            "Education": "Education Loan — investment in future earnings",
-            "Business":  "Business Loan — higher risk, variable income",
-            "Personal":  "Personal Loan — unsecured, higher risk",
-        }
-        st.caption(purpose_info[loan_purpose])
+        if loan_term <= 24:    badge("green",  f"{loan_term} months — Short Term (≤2 yrs)")
+        elif loan_term <= 60:  badge("yellow", f"{loan_term} months — Medium Term (3–5 yrs)")
+        elif loan_term <= 120: badge("orange", f"{loan_term} months — Long Term (6–10 yrs)")
+        else:                  badge("blue",   f"{loan_term} months — Very Long Term (>10 yrs)")
 
     with c2:
-        area_opts     = ["Urban", "Semiurban", "Rural"]
-        property_area = st.selectbox("Property Area", area_opts, index=area_opts.index(ex.get("property_area", "Urban")))
-        area_info = {
-            "Urban":     "Urban — higher property value & income",
-            "Semiurban": "Semiurban — moderate value & income",
-            "Rural":     "Rural — lower property value",
+        pur_opts = ["Home", "Car", "Education", "Business", "Personal"]
+        loan_purpose = st.selectbox("Loan Purpose", pur_opts, index=pur_opts.index(ex.get("loan_purpose", "Home")))
+        purpose_map = {
+            "Home":      ("green",  "Home Loan — asset backed, long term"),
+            "Car":       ("green",  "Car Loan — asset backed"),
+            "Education": ("yellow", "Education — investment in future"),
+            "Business":  ("orange", "Business — variable income, higher risk"),
+            "Personal":  ("red",    "Personal — unsecured, higher risk"),
         }
-        st.caption(area_info[property_area])
+        badge(*purpose_map[loan_purpose])
 
+        area_opts = ["Urban", "Semiurban", "Rural"]
+        property_area = st.selectbox("Property Area", area_opts, index=area_opts.index(ex.get("property_area", "Urban")))
+        area_map = {
+            "Urban":     ("green",  "Urban — high property value & income"),
+            "Semiurban": ("yellow", "Semiurban — moderate value & income"),
+            "Rural":     ("orange", "Rural — lower property value"),
+        }
+        badge(*area_map[property_area])
+
+    with c3:
         emp_cat_opts = ["Private", "Government", "MNC", "Business", "Unemployed"]
         employer_cat = st.selectbox("Employer Category", emp_cat_opts, index=emp_cat_opts.index(ex.get("employer_cat", "Private")))
-        emp_cat_info = {
-            "Government": "Government — most stable, top preference",
-            "MNC":        "MNC — very stable, high salary",
-            "Private":    "Private — stable but variable",
-            "Business":   "Business — variable income",
-            "Unemployed": "Unemployed — very high risk",
+        emp_map = {
+            "Government": ("star",   "Government — most stable, top preference"),
+            "MNC":        ("green",  "MNC — very stable, high salary"),
+            "Private":    ("green",  "Private — stable employment"),
+            "Business":   ("yellow", "Business — variable income"),
+            "Unemployed": ("red",    "Unemployed — very high risk"),
         }
-        st.caption(emp_cat_info[employer_cat])
+        badge(*emp_map[employer_cat])
 
         existing_loans = st.number_input("Existing Loans", 0, 20, ex.get("existing_loans", 0))
-        if existing_loans == 0:
-            st.caption("None — no existing loan burden")
-        elif existing_loans <= 2:
-            st.caption("Low — 1–2 existing loans")
-        elif existing_loans <= 4:
-            st.caption("Moderate — 3–4 loans, higher risk")
-        else:
-            st.caption("High — too many loans, very risky")
+        if existing_loans == 0:    badge("green",  "None — no existing loan burden")
+        elif existing_loans <= 2:  badge("yellow", f"{existing_loans} loan(s) — manageable")
+        elif existing_loans <= 4:  badge("orange", f"{existing_loans} loans — moderate risk")
+        else:                      badge("red",    f"{existing_loans} loans — very risky")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
     submitted = st.form_submit_button("🔍  Predict Loan Approval")
