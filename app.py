@@ -141,6 +141,28 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# ── Example pre-fill via session state ────────────────────────────────────────
+if "example_loaded" not in st.session_state:
+    st.session_state.example_loaded = False
+
+col_ex1, col_ex2 = st.columns([1, 4])
+with col_ex1:
+    if st.button("✨ Load Approved Example"):
+        st.session_state.example_loaded = True
+        st.session_state.ex = {
+            "gender": "Male", "age": 35, "marital_status": "Married",
+            "dependents": 1, "education": "Graduate", "employment": "Salaried",
+            "applicant_income": 150000, "coapplicant_income": 50000,
+            "credit_score": 800, "dti_ratio": 15.0,
+            "savings": 500000, "collateral_value": 2000000,
+            "loan_amount": 500000, "loan_term": 360,
+            "loan_purpose": "Home", "property_area": "Urban",
+            "employer_cat": "Government", "existing_loans": 0,
+        }
+        st.rerun()
+
+ex = st.session_state.get("ex", {})
+
 # ── Input form ─────────────────────────────────────────────────────────────────
 with st.form("loan_form"):
 
@@ -148,42 +170,50 @@ with st.form("loan_form"):
     st.markdown('<div class="section-card"><div class="section-title">👤 Personal Information</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
-        gender         = st.selectbox("Gender", ["Male", "Female"])
-        age            = st.number_input("Age", 18, 75, 35)
+        gender_opts = ["Male", "Female"]
+        gender      = st.selectbox("Gender", gender_opts, index=gender_opts.index(ex.get("gender", "Male")))
+        age         = st.number_input("Age", 18, 75, ex.get("age", 35))
     with c2:
-        marital_status = st.selectbox("Marital Status", ["Single", "Married"])
-        dependents     = st.number_input("Number of Dependents", 0, 10, 0)
+        ms_opts        = ["Single", "Married"]
+        marital_status = st.selectbox("Marital Status", ms_opts, index=ms_opts.index(ex.get("marital_status", "Single")))
+        dependents     = st.number_input("Number of Dependents", 0, 10, ex.get("dependents", 0))
     with c3:
-        education      = st.selectbox("Education Level", ["Graduate", "Not Graduate"])
-        employment     = st.selectbox("Employment Status", ["Salaried", "Self-employed", "Contract", "Unemployed"])
+        edu_opts  = ["Graduate", "Not Graduate"]
+        education = st.selectbox("Education Level", edu_opts, index=edu_opts.index(ex.get("education", "Graduate")))
+        emp_opts  = ["Salaried", "Self-employed", "Contract", "Unemployed"]
+        employment = st.selectbox("Employment Status", emp_opts, index=emp_opts.index(ex.get("employment", "Salaried")))
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Financial Information
     st.markdown('<div class="section-card"><div class="section-title">💰 Financial Information</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
-        applicant_income   = st.number_input("Applicant Income (₹)", 0, 10_000_000, 50_000, step=1000)
-        coapplicant_income = st.number_input("Co-applicant Income (₹)", 0, 10_000_000, 0, step=1000)
+        applicant_income   = st.number_input("Applicant Income (₹)", 0, 10_000_000, ex.get("applicant_income", 50_000), step=1000)
+        coapplicant_income = st.number_input("Co-applicant Income (₹)", 0, 10_000_000, ex.get("coapplicant_income", 0), step=1000)
     with c2:
-        credit_score   = st.slider("Credit Score", 300, 900, 650)
-        dti_ratio      = st.slider("DTI Ratio (%)", 0.0, 100.0, 30.0, step=0.5)
+        credit_score = st.slider("Credit Score", 300, 900, ex.get("credit_score", 650))
+        dti_ratio    = st.slider("DTI Ratio (%)", 0.0, 100.0, float(ex.get("dti_ratio", 30.0)), step=0.5)
     with c3:
-        savings          = st.number_input("Savings (₹)", 0, 100_000_000, 100_000, step=10_000)
-        collateral_value = st.number_input("Collateral Value (₹)", 0, 100_000_000, 500_000, step=10_000)
+        savings          = st.number_input("Savings (₹)", 0, 100_000_000, ex.get("savings", 100_000), step=10_000)
+        collateral_value = st.number_input("Collateral Value (₹)", 0, 100_000_000, ex.get("collateral_value", 500_000), step=10_000)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Loan Details
     st.markdown('<div class="section-card"><div class="section-title">🏦 Loan Details</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
-        loan_amount  = st.number_input("Loan Amount (₹)", 10_000, 100_000_000, 500_000, step=10_000)
-        loan_term    = st.selectbox("Loan Term (months)", [12, 24, 36, 48, 60, 84, 120, 180, 240, 360])
+        loan_amount = st.number_input("Loan Amount (₹)", 10_000, 100_000_000, ex.get("loan_amount", 500_000), step=10_000)
+        term_opts   = [12, 24, 36, 48, 60, 84, 120, 180, 240, 360]
+        loan_term   = st.selectbox("Loan Term (months)", term_opts, index=term_opts.index(ex.get("loan_term", 60)))
     with c2:
-        loan_purpose   = st.selectbox("Loan Purpose", ["Home", "Car", "Education", "Business", "Personal"])
-        property_area  = st.selectbox("Property Area", ["Urban", "Semiurban", "Rural"])
+        pur_opts     = ["Home", "Car", "Education", "Business", "Personal"]
+        loan_purpose = st.selectbox("Loan Purpose", pur_opts, index=pur_opts.index(ex.get("loan_purpose", "Home")))
+        area_opts    = ["Urban", "Semiurban", "Rural"]
+        property_area = st.selectbox("Property Area", area_opts, index=area_opts.index(ex.get("property_area", "Urban")))
     with c3:
-        employer_cat   = st.selectbox("Employer Category", ["Private", "Government", "MNC", "Business", "Unemployed"])
-        existing_loans = st.number_input("Existing Loans", 0, 20, 0)
+        emp_cat_opts = ["Private", "Government", "MNC", "Business", "Unemployed"]
+        employer_cat = st.selectbox("Employer Category", emp_cat_opts, index=emp_cat_opts.index(ex.get("employer_cat", "Private")))
+        existing_loans = st.number_input("Existing Loans", 0, 20, ex.get("existing_loans", 0))
     st.markdown('</div>', unsafe_allow_html=True)
 
     submitted = st.form_submit_button("🔍  Predict Loan Approval")
